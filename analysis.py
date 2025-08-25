@@ -20,6 +20,7 @@ import seaborn as sns
 
 os.chdir(r"C:\Users\Startklar\OneDrive\Dokumente\Master\Data")
 
+figure_path = r"C:\Users\Startklar\OneDrive\Dokumente\Master\Output"
 
 #%% import of data
 
@@ -50,7 +51,7 @@ corpus_all_doc = corpus_all_cap[['doc_no', 'year', 'disaster', 'Bodytext']].grou
 plt.rcParams['font.family'] = 'Arial'
 
 # function to count disaster per year
-def plotDisasterOccurrences(df):
+def plotDisasterOccurrences(df, png_name):
     """
     Splits disaster data by type and year, counts the occurrences, and plots them as a stacked area chart.
 
@@ -75,16 +76,18 @@ def plotDisasterOccurrences(df):
                   labels=['drought', 'flood', 'heatwave', 'hurricane', 'storm', 'tornado', 'wildfire'],
                   colors=colors[:7])
     plt.xlabel('Year')
-    plt.ylabel('# Disaster')
+    plt.ylabel('Number of Disaster Reports')
     plt.legend(loc='upper left')
     plt.xlim(no_disaster['year'].min(), no_disaster['year'].max())
     plt.tight_layout()
+    fig.savefig(png_name, dpi=300, bbox_inches="tight")
     plt.show()
+    
 
     return no_disaster
 
 # function to count capacity occurrences per year
-def plotCapacityOccurrences(df):
+def plotCapacityOccurrences(df, png_name):
     """
     Groups disaster data by capacity and year, counts the occurrences, and plots them as a line chart.
 
@@ -99,11 +102,12 @@ def plotCapacityOccurrences(df):
     fig, ax = plt.subplots(figsize=(10,6))
     no_capacity.plot(cmap='Pastel2', linewidth=2, ax=ax) #'viridis_r'
     ax.set_xlabel('Year')
-    ax.set_ylabel('# Capacity')
+    ax.set_ylabel('Number of Resilience Capacity Mentions')
     ax.legend(loc='upper left')
     plt.xlim(no_capacity.index.min(), no_capacity.index.max())
     ax.set_ylim(bottom=0)
     plt.tight_layout()
+    fig.savefig(png_name, dpi=300, bbox_inches="tight")
     plt.show()
     
     return no_capacity
@@ -192,7 +196,7 @@ def createGeodataframe(df):
 
 
 # function to create KDE heatmap    
-def plotKDE(gdf):
+def plotKDE(gdf, png_name):
     """
     Plots a Kernel Density Estimation (KDE) heatmap in a Mollweide projection.
     Takes a GeoDataFrame with point geometries, estimates spatial density using Gaussian KDE, applies a threshold to highlight denser regions, 
@@ -238,7 +242,8 @@ def plotKDE(gdf):
     # add geographic features
     ax.add_feature(cartopy.feature.LAND, zorder=0, facecolor='#B1B2B4', linewidth=0.001)
     ax.add_feature(cartopy.feature.BORDERS, edgecolor='white', linewidth=0.25)
-  
+    
+    plt.savefig(png_name, dpi=300, bbox_inches="tight")
     plt.show()    
     
 
@@ -321,7 +326,7 @@ slow_onset = ['drought']
 #%% functions for thematic analysis 
 
 # function to plot heat map
-def plotHeatMap(df, group_feature):
+def plotHeatMap(df, group_feature, png_name):
     """
     Creates a heatmap showing topic counts by capacity and a chosen grouping feature.
     Groups data by the given feature, capacity, and topic, normalizes counts across grouping feature, and plots heatmap.
@@ -359,6 +364,8 @@ def plotHeatMap(df, group_feature):
     ax.set_xlabel('')
     ax.set_ylabel('')
     plt.tight_layout()
+    
+    plt.savefig(png_name, dpi=300, bbox_inches="tight")
     plt.show()
 
 
@@ -416,11 +423,11 @@ df_count_freq = pd.DataFrame({'count': count_freq.index, 'num_doc': count_freq.v
 ######################################################
 
 # plot disasters per year
-no_disaster = plotDisasterOccurrences(corpus_all_doc)
+no_disaster = plotDisasterOccurrences(corpus_all_doc, os.path.join(figure_path, "no_disaster_general.png"))
 
 
 # plot capacity occurences per year
-no_capacity = plotCapacityOccurrences(corpus_all_cap)
+no_capacity = plotCapacityOccurrences(corpus_all_cap, os.path.join(figure_path, "no_capacity_general_wo_disaster_no.png"))
 
 
 # special plot including general number of disaster articles
@@ -434,9 +441,10 @@ no_article_plot['count'].plot(ax=ax, color='black', linestyle='--', linewidth=2,
 plt.xlim(no_capacity.index.min(), no_capacity.index.max())
 ax.set_ylim(bottom=0)
 plt.xlabel('Year')
-plt.ylabel('# Capacity')
+plt.ylabel('Number of Resilience Capacity Mentions')
 plt.legend(loc='upper left')
 plt.tight_layout()
+fig.savefig(os.path.join(figure_path, "no_capacity_general.png"), dpi=300, bbox_inches="tight")
 plt.show()
 
 
@@ -448,10 +456,10 @@ doc_gn = df_gn['doc_no'].unique()
 
 # create plots with number of capacities per year for regions
 df_gn_capacity = corpus_all_cap.loc[corpus_all_cap['doc_no'].isin(doc_gn)]
-plotCapacityOccurrences(df_gn_capacity)
+plotCapacityOccurrences(df_gn_capacity, os.path.join(figure_path, "no_capacity_gn.png"))
 
 df_gs_capacity = corpus_all_cap.loc[~corpus_all_cap['doc_no'].isin(doc_gn)]
-plotCapacityOccurrences(df_gs_capacity)
+plotCapacityOccurrences(df_gs_capacity, os.path.join(figure_path, "no_capacity_gs.png"))
 
 
 ######################################################
@@ -460,10 +468,10 @@ plotCapacityOccurrences(df_gs_capacity)
 
 # create plots with number of capacities per year for disaster typologies
 df_slow_onset_capacity = corpus_all_cap[corpus_all_cap['disaster'].apply(lambda x: any(word in slow_onset for word in x))]
-plotCapacityOccurrences(df_slow_onset_capacity)
+plotCapacityOccurrences(df_slow_onset_capacity, os.path.join(figure_path, "no_capacity_slow_onset.png"))
 
 df_sudden_onset_capacity = corpus_all_cap[~corpus_all_cap['disaster'].apply(lambda x: any(word in slow_onset for word in x))]
-plotCapacityOccurrences(df_sudden_onset_capacity)
+plotCapacityOccurrences(df_sudden_onset_capacity, os.path.join(figure_path, "no_capacity_sudden_onset.png"))
 
 
 #%% spatial analysis
@@ -476,7 +484,7 @@ plotCapacityOccurrences(df_sudden_onset_capacity)
 gdf_mollweide_all = createGeodataframe(df_locations_all)
 gdf_mollweide_unique = createGeodataframe(df_locations_unique)
 
-plotKDE(gdf_mollweide_unique)
+plotKDE(gdf_mollweide_unique, os.path.join(figure_path, "KDE_global.png"))
 
 # determine number of unique toponyms and countries
 print("Number of unique place names: {}".format(df_locations_unique['location'].explode().nunique()))
@@ -498,8 +506,8 @@ print(df_locations_wo_country[['location', 'country']].value_counts().head(50))
 gdf_mollweide_gn = createGeodataframe(df_gn)
 gdf_mollweide_gs = createGeodataframe(df_gs)
 
-plotKDE(gdf_mollweide_gn)
-plotKDE(gdf_mollweide_gs)
+plotKDE(gdf_mollweide_gn, os.path.join(figure_path, "KDE_GN.png"))
+plotKDE(gdf_mollweide_gs, os.path.join(figure_path, "KDE_GS.png"))
 
 # determine which locations are dominant in the Global North
 df_gn_wo_country = df_gn.loc[df_gn['country']!=df_gn['location']]
@@ -522,8 +530,8 @@ print(df_gs['location'].value_counts().head(50))
 gdf_slow_onset = createGeodataframe(df_slow_onset)
 gdf_sudden_onset = createGeodataframe(df_sudden_onset)
 
-plotKDE(gdf_slow_onset)
-plotKDE(gdf_sudden_onset)
+plotKDE(gdf_slow_onset, os.path.join(figure_path, "KDE_slow_onset.png"))
+plotKDE(gdf_sudden_onset, os.path.join(figure_path, "KDE_sudden_onset.png"))
 
 # determine which locations are dominant for slow-onset 
 df_slow_wo_country = df_slow_onset[['location', 'country']].explode(['location', 'country'])
@@ -543,7 +551,7 @@ print(df_sudden_wo_country[['location', 'country']].value_counts().head(50))
 ######################################################
 
 # create heat map
-plotHeatMap(df_subcategories_filtered, 'region_overall')
+plotHeatMap(df_subcategories_filtered, 'region_overall', os.path.join(figure_path, "Disaster_all_normalized.png"))
 
 
 ######################################################
@@ -551,6 +559,6 @@ plotHeatMap(df_subcategories_filtered, 'region_overall')
 ######################################################
 
 # create heat map
-plotHeatMap(df_subcategories_filtered, 'disaster_type')
+plotHeatMap(df_subcategories_filtered, 'disaster_type', os.path.join(figure_path, "Region_all_normalized.png"))
 
 
